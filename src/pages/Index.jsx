@@ -16,6 +16,8 @@ const Index = () => {
       context.rotate(angle);
       context.fillStyle = color;
       context.fillRect(-15, -10, 30, 20);
+      context.fillStyle = "black";
+      context.fillRect(0, -2, 15, 4); // Turret
       context.restore();
     };
 
@@ -59,42 +61,77 @@ const Index = () => {
     const moveBullets = () => {
       setPlayer((prev) => ({
         ...prev,
-        bullets: prev.bullets.map((bullet) => ({
-          ...bullet,
-          x: bullet.x + Math.cos(bullet.angle) * 5,
-          y: bullet.y + Math.sin(bullet.angle) * 5,
-        })),
+        bullets: prev.bullets
+          .map((bullet) => ({
+            ...bullet,
+            x: bullet.x + Math.cos(bullet.angle) * 5,
+            y: bullet.y + Math.sin(bullet.angle) * 5,
+          }))
+          .filter((bullet) => bullet.x >= 0 && bullet.x <= 500 && bullet.y >= 0 && bullet.y <= 500),
       }));
 
       setEnemies((prevEnemies) =>
         prevEnemies.map((enemy) => ({
           ...enemy,
-          bullets: enemy.bullets.map((bullet) => ({
-            ...bullet,
-            x: bullet.x + Math.cos(bullet.angle) * 5,
-            y: bullet.y + Math.sin(bullet.angle) * 5,
-          })),
+          bullets: enemy.bullets
+            .map((bullet) => ({
+              ...bullet,
+              x: bullet.x + Math.cos(bullet.angle) * 5,
+              y: bullet.y + Math.sin(bullet.angle) * 5,
+            }))
+            .filter((bullet) => bullet.x >= 0 && bullet.x <= 500 && bullet.y >= 0 && bullet.y <= 500),
         }))
       );
     };
 
     const moveEnemies = () => {
       setEnemies((prevEnemies) =>
-        prevEnemies.map((enemy) => ({
-          ...enemy,
-          x: enemy.x + (Math.random() - 0.5) * 10,
-          y: enemy.y + (Math.random() - 0.5) * 10,
-          angle: Math.random() * 2 * Math.PI,
-          bullets: [
-            ...enemy.bullets,
-            {
-              x: enemy.x + Math.cos(enemy.angle) * 15,
-              y: enemy.y + Math.sin(enemy.angle) * 15,
-              angle: enemy.angle,
-            },
-          ],
-        }))
+        prevEnemies.map((enemy) => {
+          const newAngle = Math.random() * 2 * Math.PI;
+          return {
+            ...enemy,
+            x: enemy.x + (Math.random() - 0.5) * 10,
+            y: enemy.y + (Math.random() - 0.5) * 10,
+            angle: newAngle,
+            bullets: [
+              ...enemy.bullets,
+              {
+                x: enemy.x + Math.cos(newAngle) * 15,
+                y: enemy.y + Math.sin(newAngle) * 15,
+                angle: newAngle,
+              },
+            ],
+          };
+        })
       );
+    };
+
+    const detectCollisions = () => {
+      player.bullets.forEach((bullet) => {
+        enemies.forEach((enemy) => {
+          if (
+            bullet.x > enemy.x - 15 &&
+            bullet.x < enemy.x + 15 &&
+            bullet.y > enemy.y - 10 &&
+            bullet.y < enemy.y + 10
+          ) {
+            // Handle collision (e.g., remove enemy or bullet)
+          }
+        });
+      });
+
+      enemies.forEach((enemy) => {
+        enemy.bullets.forEach((bullet) => {
+          if (
+            bullet.x > player.x - 15 &&
+            bullet.x < player.x + 15 &&
+            bullet.y > player.y - 10 &&
+            bullet.y < player.y + 10
+          ) {
+            // Handle collision (e.g., reduce player health)
+          }
+        });
+      });
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -102,6 +139,7 @@ const Index = () => {
       updateGame();
       moveBullets();
       moveEnemies();
+      detectCollisions();
     }, 100);
 
     return () => {
